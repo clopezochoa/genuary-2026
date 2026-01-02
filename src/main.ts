@@ -1,5 +1,5 @@
 import { GenuarySketch } from './genuary-framework';
-import { sketch } from './sketches/day01';
+import { sketch } from './sketches/day02';
 
 const size = 512;
 

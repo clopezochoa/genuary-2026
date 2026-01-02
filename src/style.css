@@ -10,5 +10,9 @@ body {
   margin: 0;
   display: flex;
   place-items: center;
-  background-color: white;
+  background-color: transparent;
+}
+
+svg {
+  background-color: transparent;
 }

@@ -5,3 +5,7 @@ export const isInBounds = (x: number, y: number, width: number, height: number, 
     y >= margin &&
     y <= height - margin;
 };
+
+export function easeOutExpo(t: number): number {
+  return t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
+}
