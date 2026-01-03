@@ -1,5 +1,5 @@
 import { GenuarySketch } from './genuary-framework';
-import { sketch } from './sketches/day02';
+import { sketch } from './sketches/day03';
 
 const size = 512;
 
@@ -9,7 +9,7 @@ const app = new GenuarySketch({
   containerId: 'app',
   sketch,
   mode: 'interactive', // 'single' | 'loop' | 'interactive' | 'random-play',
-  maxIterations: 10000
+  maxIterations: 7000
 });
 
 app.run();

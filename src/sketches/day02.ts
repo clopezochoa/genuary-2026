@@ -6,14 +6,6 @@ export const sketch: SketchFunction = (() => {
   // Japanese hiragana
   const letters = "ぁあぃいぅうぇえぉおかがきぎくぐけげこごさざしじすずせぜそぞただちぢっつづてでとどなにぬねのはばぱひびぴふぶぷへべぺほぼぽまみむめもゃやゅゆょよらりるれろゎわゐゑをんゔゕゖ		゙゚゛゜ゝゞゟ";
   let fontSize = 100;
-  const numLetters = 5;
-
-  const letterStates = Array.from({ length: numLetters }, (_, _i) => ({
-    randomLetter: '',
-    opacity: 0.0001,
-    displayOpacity: 0.0001,
-    inertia: true
-  }));
 
   let opacity = 0.0001;
   let displayOpacity = 0.0001;
