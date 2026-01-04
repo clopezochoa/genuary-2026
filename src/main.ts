@@ -1,5 +1,6 @@
 import { GenuarySketch } from './genuary-framework';
-import { sketch } from './sketches/day03';
+const day = new Date().getDate().toString().padStart(2, '0');
+const { sketch } = await import(`./sketches/day${day}`);
 
 const size = 512;
 

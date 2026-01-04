@@ -1,3 +1,6 @@
+import GIF from 'gif.js';
+import gifWorker from 'gif.js/dist/gif.worker.js?url';
+
 export interface SketchConfig {
   svg: SVGSVGElement;
   width: number;
@@ -9,7 +12,7 @@ export interface SketchConfig {
 }
 
 export interface SketchFunction {
-  setup?: (config: SketchConfig) => void;
+  setup?: (config: SketchConfig) => void | Promise<void>;
   loop?: (config: SketchConfig) => boolean;
   teardown?: (config: SketchConfig) => void;
 }
@@ -75,6 +78,7 @@ export class GenuarySketch {
     };
 
     controls.appendChild(createButton('Save PNG', () => this.savePNG()));
+    controls.appendChild(createButton('Export GIF', () => this.exportGIF()));
     controls.appendChild(createButton('Reset', () => this.reset()));
 
     if (this.options.mode === 'loop' || this.options.mode === 'interactive') {
@@ -127,11 +131,11 @@ export class GenuarySketch {
     return this.seed / 233280;
   }
 
-  public run(): void {
+  public async run(): Promise<void> {
     const config = this.getConfig();
 
     if (this.options.sketch.setup) {
-      this.options.sketch.setup(config);
+      await this.options.sketch.setup(config); // Add await
     }
 
     switch (this.options.mode) {
@@ -208,7 +212,7 @@ export class GenuarySketch {
     }
   }
 
-  private reset(): void {
+  private async reset(): Promise<void> {
     this.stop();
     this.frame = 0;
     this.seed = Date.now();
@@ -217,7 +221,7 @@ export class GenuarySketch {
     config.utils.clear();
 
     if (this.options.sketch.setup) {
-      this.options.sketch.setup(config);
+      await this.options.sketch.setup(config); // Add await
     }
 
     if (this.options.mode === 'single' && this.options.sketch.loop) {
@@ -260,4 +264,112 @@ export class GenuarySketch {
 
     img.src = url;
   }
+
+  private async exportGIF(): Promise<void> {
+    const wasRunning = this.isRunning;
+    this.stop();
+
+    const originalFrame = this.frame;
+    const originalSeed = this.seed;
+
+    const status = document.createElement('div');
+    status.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.9); color: white; padding: 20px; border-radius: 8px; z-index: 10000; font-family: monospace;';
+    status.textContent = 'Generating GIF... 0%';
+    document.body.appendChild(status);
+
+    const gif = new GIF({
+      workers: 2,
+      quality: 10,
+      width: this.options.width,
+      height: this.options.height,
+      workerScript: gifWorker
+    });
+
+    this.frame = 0;
+    this.seed = originalSeed;
+    const config = this.getConfig();
+    config.utils.clear();
+
+    if (this.options.sketch.setup) {
+      this.options.sketch.setup(config);
+    }
+
+    const maxFrames = Math.min(this.options.maxIterations ?? 100, 100);
+    const fps = this.options.fps || 30;
+    const delay = 1000 / fps;
+
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    for (let i = 0; i < maxFrames; i++) {
+      if (this.options.sketch.loop) {
+        const shouldContinue = this.options.sketch.loop(this.getConfig());
+        if (!shouldContinue) break;
+      }
+      this.frame++;
+
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      const canvas = await this.svgToCanvas();
+      gif.addFrame(canvas, { delay });
+
+      status.textContent = `Generating GIF... ${Math.round((i / maxFrames) * 100)}%`;
+    }
+
+    this.frame = originalFrame;
+    this.seed = originalSeed;
+    this.reset();
+
+    if (wasRunning) {
+      this.startLoop();
+    }
+
+    status.textContent = 'Rendering GIF...';
+
+    gif.on('finished', (blob: Blob) => {
+      const link = document.createElement('a');
+      link.download = `genuary-${new Date().toISOString().slice(0, 10)}.gif`;
+      link.href = URL.createObjectURL(blob);
+      link.click();
+
+      document.body.removeChild(status);
+      URL.revokeObjectURL(link.href);
+    });
+
+    gif.render();
+  }
+
+
+
+  private async svgToCanvas(): Promise<HTMLCanvasElement> {
+    return new Promise((resolve, reject) => {
+      const svgData = new XMLSerializer().serializeToString(this.svg);
+      const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(svgBlob);
+
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = this.options.width;
+        canvas.height = this.options.height;
+
+        const ctx = canvas.getContext('2d')!;
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0);
+
+        URL.revokeObjectURL(url);
+        resolve(canvas);
+      };
+
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        reject(new Error('Failed to load SVG'));
+      };
+
+      img.src = url;
+    });
+  }
+
 }
