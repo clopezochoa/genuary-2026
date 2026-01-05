@@ -6,6 +6,7 @@ export interface SketchConfig {
   width: number;
   height: number;
   frame: number;
+  fps: number;
   maxIterations: number;
   random: (seed?: number) => number;
   utils: SketchUtils;
@@ -46,7 +47,7 @@ export class GenuarySketch {
   private isRunning = false;
 
   constructor(options: GenuaryOptions) {
-    this.options = { fps: 999, maxIterations: Infinity, ...options };
+    this.options = { fps: 60, maxIterations: Infinity, ...options };
     this.container = document.getElementById(options.containerId)!;
     this.svg = this.createSVG();
     this.setupUI();
@@ -99,6 +100,7 @@ export class GenuarySketch {
       width: this.options.width,
       height: this.options.height,
       frame: this.frame,
+      fps: this.options.fps ?? 60,
       maxIterations: this.options.maxIterations ?? Infinity,
       random: this.seededRandom.bind(this),
       utils: {
@@ -295,7 +297,7 @@ export class GenuarySketch {
     }
 
     const maxFrames = Math.min(this.options.maxIterations ?? 100, 100);
-    const fps = this.options.fps || 30;
+    const fps = this.options.fps || 60;
     const delay = 1000 / fps;
 
     await new Promise(resolve => setTimeout(resolve, 100));
