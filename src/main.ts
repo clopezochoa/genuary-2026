@@ -10,8 +10,8 @@ const app = new GenuarySketch({
   containerId: 'app',
   sketch,
   mode: 'interactive', // 'single' | 'loop' | 'interactive' | 'random-play',
-  maxIterations: 7000,
-  fps: 60,
+  maxIterations: 100000,
+  fps: 48,
 });
 
 app.run();

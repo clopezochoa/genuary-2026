@@ -45,6 +45,7 @@ export class GenuarySketch {
   private animationId: number | null = null;
   private seed = Date.now();
   private isRunning = false;
+  private jumpInput: HTMLInputElement | null = null;
 
   constructor(options: GenuaryOptions) {
     this.options = { fps: 60, maxIterations: Infinity, ...options };
@@ -85,11 +86,37 @@ export class GenuarySketch {
     if (this.options.mode === 'loop' || this.options.mode === 'interactive') {
       controls.appendChild(createButton('Play/Pause', () => this.togglePlayPause()));
       controls.appendChild(createButton('Step', () => this.step()));
+
+      // Jump N Frames controls
+      const jumpContainer = document.createElement('div');
+      jumpContainer.style.cssText = 'margin: 10px 0; padding: 10px 0; border-top: 1px solid #666;';
+
+      const jumpLabel = document.createElement('label');
+      jumpLabel.textContent = 'Jump Frames:';
+      jumpLabel.style.cssText = 'display: block; margin-bottom: 5px; font-size: 12px;';
+      jumpContainer.appendChild(jumpLabel);
+
+      this.jumpInput = document.createElement('input');
+      this.jumpInput.type = 'number';
+      this.jumpInput.value = '100';
+      this.jumpInput.min = '1';
+      this.jumpInput.style.cssText = 'width: 100%; padding: 6px; background: #222; color: white; border: 1px solid #666; border-radius: 4px; margin-bottom: 5px;';
+      jumpContainer.appendChild(this.jumpInput);
+
+      jumpContainer.appendChild(createButton('Jump Forward', () => this.jumpFrames()));
+
+      controls.appendChild(jumpContainer);
     }
 
     if (this.options.mode === 'random-play') {
       controls.appendChild(createButton('Random', () => this.randomize()));
     }
+
+    const frameCounter = document.createElement('div');
+    frameCounter.id = 'frame-counter';
+    frameCounter.style.cssText = 'margin-top: 10px; padding-top: 10px; border-top: 1px solid #666; font-size: 12px; text-align: center;';
+    frameCounter.textContent = 'Frame: 0';
+    controls.appendChild(frameCounter);
 
     this.container.appendChild(controls);
   }
@@ -223,11 +250,43 @@ export class GenuarySketch {
     config.utils.clear();
 
     if (this.options.sketch.setup) {
-      await this.options.sketch.setup(config); // Add await
+      await this.options.sketch.setup(config);
     }
 
     if (this.options.mode === 'single' && this.options.sketch.loop) {
       this.options.sketch.loop(config);
+    }
+
+    this.updateFrameCounter();
+  }
+
+
+  private jumpFrames(): void {
+    if (!this.jumpInput || !this.options.sketch.loop) return;
+
+    const framesToJump = parseInt(this.jumpInput.value) || 100;
+    const wasRunning = this.isRunning;
+
+    this.stop();
+
+    for (let i = 0; i < framesToJump; i++) {
+      const shouldContinue = this.step();
+      if (!shouldContinue || this.frame >= this.options.maxIterations!) {
+        break;
+      }
+    }
+
+    this.updateFrameCounter();
+
+    if (wasRunning) {
+      this.startLoop();
+    }
+  }
+
+  private updateFrameCounter(): void {
+    const counter = document.getElementById('frame-counter');
+    if (counter) {
+      counter.textContent = `Frame: ${this.frame}`;
     }
   }
 
@@ -296,7 +355,7 @@ export class GenuarySketch {
       this.options.sketch.setup(config);
     }
 
-    const maxFrames = Math.min(this.options.maxIterations ?? 100, 100);
+    const maxFrames = Math.min(this.options.maxIterations ?? 100, 1000);
     const fps = this.options.fps || 60;
     const delay = 1000 / fps;
 
