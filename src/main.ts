@@ -2,7 +2,7 @@ import { GenuarySketch } from './genuary-framework';
 const day = new Date().getDate().toString().padStart(2, '0');
 const { sketch } = await import(`./sketches/day${day}`);
 
-const size = 512;
+const size = 1024;
 
 const app = new GenuarySketch({
   width: size,
@@ -10,8 +10,8 @@ const app = new GenuarySketch({
   containerId: 'app',
   sketch,
   mode: 'interactive', // 'single' | 'loop' | 'interactive' | 'random-play',
-  maxIterations: 1000,
-  fps: 24,
+  maxIterations: 60,
+  fps: 6,
 });
 
 app.run();
