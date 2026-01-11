@@ -9,7 +9,7 @@ const app = new GenuarySketch({
   height: size,
   containerId: 'app',
   sketch,
-  mode: 'interactive', // 'single' | 'loop' | 'interactive' | 'random-play',
+  mode: 'single', // 'single' | 'loop' | 'interactive' | 'random-play',
   maxIterations: 60,
   fps: 6,
 });
