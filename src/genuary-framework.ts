@@ -20,6 +20,7 @@ export interface SketchFunction {
 
 export interface SketchUtils {
   clear: () => void;
+  clearLooped: (setupElements: SVGElement[]) => void;
   createElement: <K extends keyof SVGElementTagNameMap>(
     tag: K,
     attrs?: Record<string, string | number>
@@ -134,6 +135,15 @@ export class GenuarySketch {
         clear: () => {
           while (this.svg.firstChild) {
             this.svg.removeChild(this.svg.firstChild);
+          }
+        },
+        clearLooped: (_protected: SVGElement[]) => {
+          let removable = Array.from(this.svg.children);
+          for (const el of _protected) {
+            removable = removable.filter(r => r !== el);
+          }
+          for (const el of removable) {
+            this.svg.removeChild(el);
           }
         },
         createElement: <K extends keyof SVGElementTagNameMap>(
@@ -355,7 +365,7 @@ export class GenuarySketch {
       this.options.sketch.setup(config);
     }
 
-    const maxFrames = Math.min(this.options.maxIterations ?? 100, 1000);
+    const maxFrames = Math.min(this.options.maxIterations ?? 100, 8000);
     const fps = this.options.fps || 60;
     const delay = 1000 / fps;
 
